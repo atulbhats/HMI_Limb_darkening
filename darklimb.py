@@ -8,6 +8,7 @@ Coefficients taken from
     Cox, A. N.: Allen's Astrophysical Quantities, Springer, 2000 taken from IDL
 
 Author:  AngelMartinezC
+Modified: AtulBhatS
 """
 
 
@@ -21,6 +22,7 @@ import os
 # Make fonts bigger
 plt.rcParams.update({'font.size': 13})
 
+replace = '.fits'
 
 def writefits(image, name='limbcorrect.fits'):
     """
@@ -30,9 +32,10 @@ def writefits(image, name='limbcorrect.fits'):
     ----------
         image `astropy.fits.getdata`: Sunpy/astropy map
     """
-    os.system(f'rm -r {name}')
-    image.save(name)
-    return
+    #os.system(f'rm -r {name}')
+    name = name.replace(replace,"_noLimbDark.fits")
+    image.save(name,overwrite=1)
+    return name
 
 
 def figure(image):
@@ -128,14 +131,11 @@ def darklimb(name):
                 + vl*np.cos(np.arcsin(grid))**2)
 
     # Final image
-    print(mapa.meta['BSCALE'])
     imgout = np.array(array/limbfilt, dtype='uint32')
     mapa.meta["BZERO"] = bzero
     mapa.meta["BLANK"] = blank
     mapa.meta["BSCALE"] = bscale
-    print(bzero, bscale)
-    print(mapa.meta['BSCALE'])
-    imgout *= (int(1e-4*np.max(data)))
+    imgout *= (int(1e-4*np.nanmax(data)))
 
     return Map(imgout, mapa.meta), mapa
 
@@ -150,8 +150,9 @@ def darklimb(name):
 if __name__ == '__main__':
 
     # Input the string of the original name
-    name = './hmi.ic_45s.20110730_020815_TAI.2.continuum.fits'
+    name = './hmi.ic_45s.2014.02.04_03_44_15_TAI.continuum.fits'
     corrected, original = darklimb(name)
     figure(original)
     figure(corrected)
-    writefits(corrected)
+    fname = writefits(corrected,name)
+    print(f"Your File has been processed and saved as [{fname}] in the same directory.")
